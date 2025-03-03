@@ -39,7 +39,7 @@ Requirements:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/midi-doc-tool.git
+git clone https://github.com/ashp8i//midi-hid-inspektr.git
 cd midi-doc-tool
 
 # Create and activate virtual environment with UV
