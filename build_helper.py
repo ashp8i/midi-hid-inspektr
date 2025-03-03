@@ -32,7 +32,7 @@ def update_spec_file(platform, version):
     # Platform-specific replacements
     if platform == "macos":
         replacements["{{ICON_PATH}}"] = "resources/icons/app_icon.icns"
-        replacements["{{BUNDLE_ID}}"] = "com.yourcompany.midiinspektr"
+        replacements["{{BUNDLE_ID}}"] = "com.yourashp8i.midiinspektr"
     elif platform == "linux":
         replacements["{{ICON_PATH}}"] = "resources/icons/app_icon.png"
         replacements["{{BUNDLE_ID}}"] = ""  # Not used on Linux

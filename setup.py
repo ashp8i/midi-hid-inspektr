@@ -12,7 +12,7 @@ OPTIONS = {
     'plist': {
         'CFBundleName': 'MIDI HID Viewer',
         'CFBundleDisplayName': 'MIDI HID Viewer',
-        'CFBundleIdentifier': 'com.yourcompany.midihidviewer',
+        'CFBundleIdentifier': 'com.yourcompany.midihidinspektr',
         'CFBundleVersion': '1.0.0',
         'CFBundleIconFile': 'app_icon.icns',
     },
@@ -26,7 +26,7 @@ OPTIONS = {
 
 setup(
     app=APP,
-    name='MIDIHIDViewer',
+    name='midihidinspektr',
     data_files=DATA_FILES,
     options={'py2app': OPTIONS},
     setup_requires=['py2app'],
