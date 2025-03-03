@@ -1,20 +1,23 @@
 #!/usr/bin/env python3
 import sys
 import os
+import platform
 import argparse
 from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import Qt
 import time
+
 # Add the parent directory to sys.path if needed
 current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
 
-from PySide6.QtWidgets import QApplication
 from midi_hid_app.splash import CustomSplash
 from midi_hid_app.simple_midi import SimpleMIDIHandler
 from midi_hid_app.simple_hid import SimpleHIDHandler
 from midi_hid_app.simple_ui import SimpleMainWindow
-from midi_hid_app.style import get_pro_dark_theme
+
 # Mac-specific icon fix
 if sys.platform == 'darwin':
     # Get absolute path to icon file
@@ -33,9 +36,6 @@ if sys.platform == 'darwin':
 # Set application icon
 def set_app_icon(app):
     """Set the application icon based on platform"""
-    import os
-    from PySide6.QtGui import QIcon
-    
     # Get the base directory
     base_dir = os.path.dirname(os.path.abspath(__file__))
     
@@ -65,6 +65,50 @@ def set_app_icon(app):
             return
     
     print("No application icon found")
+
+def configure_application(app):
+    """Configure application with native platform-specific styling"""
+    # Set application name
+    app.setApplicationName("MIDI/HID Inspektr")
+    
+    # Set app icon
+    set_app_icon(app)
+    
+    # Apply platform-specific settings
+    system = platform.system()
+    
+    if system == 'Darwin':  # macOS
+        # macOS specific optimizations
+        app.setAttribute(Qt.AA_DontShowIconsInMenus)
+        app.setAttribute(Qt.AA_UseHighDpiPixmaps)
+        
+        # Fix for combobox dropdown visibility
+        app.setStyleSheet("""
+            QComboBox::drop-down {
+                border: 0px;
+                width: 24px;
+            }
+            QComboBox::down-arrow {
+                width: 14px;
+                height: 14px;
+            }
+        """)
+        
+    elif system == 'Windows':
+        # Windows optimizations
+        app.setStyle("windowsvista")
+        
+    else:  # Linux
+        # Detect desktop environment for better integration
+        desktop_env = os.environ.get('XDG_CURRENT_DESKTOP', '').lower()
+        if 'kde' in desktop_env:
+            app.setStyle("breeze")
+        elif 'gnome' in desktop_env:
+            app.setStyle("adwaita")
+        else:
+            app.setStyle("fusion")  # Fallback for other environments
+    
+    return app
 
 def main():
     # Parse command line arguments
@@ -106,7 +150,6 @@ def main():
     
     # Handle virtual port creation
     if args.create_virtual:
-        import platform
         if platform.system() in ('Darwin', 'Linux'):
             if midi_handler.create_virtual_port(args.create_virtual):
                 print(f"Created virtual MIDI port: {args.create_virtual}")
@@ -118,18 +161,9 @@ def main():
             print("Virtual MIDI ports are not supported on this platform")
             return 1
     
-    # Create application
+    # Create application and configure it
     app = QApplication(sys.argv)
-    app.setApplicationName("MIDI/HID Inspektr")
-    
-    # Set app icon
-    set_app_icon(app)
-    
-    # # Apply the dark theme
-    # app.setStyleSheet(get_dark_theme())
-
-    # In your main function
-    app.setStyleSheet(get_pro_dark_theme())
+    app = configure_application(app)
     
     # Show splash screen
     try:
