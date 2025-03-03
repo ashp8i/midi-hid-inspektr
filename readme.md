@@ -1,15 +1,11 @@
 # MIDI/HID Controller Mapping Documentation Tool
 
-A cross-platform tool for recording, analyzing, and documenting MIDI and HID controller mappings with support for multiple decks and template-based documentation.
+A cross-platform tool for viewing MIDI and HID controller Activity.
 
 ## Features
 
 - **Device Detection**: Automatically detects connected MIDI and HID devices
 - **Real-time Capture**: Records MIDI/HID messages as you interact with your controller
-- **Visual Mapping**: Create visual representations of your controller's layout
-- **Template System**: Build reusable templates for common controller sections
-- **4-Deck Support**: Full support for 4-deck controllers with deck-specific mappings
-- **Comprehensive Documentation**: Generates detailed HTML5 documentation
 - **Multiple Export Formats**: Export as HTML, JSON, or CSV
 - **Low Footprint**: Efficient Python implementation with minimal resource usage
 - **Cross-Platform**: Works on Windows, macOS, and Linux
