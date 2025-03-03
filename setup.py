@@ -10,9 +10,9 @@ DATA_FILES = [
 OPTIONS = {
     'argv_emulation': False,
     'plist': {
-        'CFBundleName': 'MIDI HID Viewer',
-        'CFBundleDisplayName': 'MIDI HID Viewer',
-        'CFBundleIdentifier': 'com.yourcompany.midihidinspektr',
+        'CFBundleName': 'MIDI/HID Inspektr',
+        'CFBundleDisplayName': 'MIDI/HID Inspektr',
+        'CFBundleIdentifier': 'com.ashp8i.midihidinspektr',
         'CFBundleVersion': '1.0.0',
         'CFBundleIconFile': 'app_icon.icns',
     },

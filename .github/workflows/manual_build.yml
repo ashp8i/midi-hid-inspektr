@@ -44,7 +44,7 @@ jobs:
     - name: Generate version file
       run: |
         echo "VERSION = '${{ needs.prepare.outputs.version }}'" > version.py
-        echo "APP_NAME = 'MIDI HID Viewer'" >> version.py
+        echo "APP_NAME = 'MIDI/HID Inspektr'" >> version.py
         echo "BUILD_DATE = '$(date)'" >> version.py
         
     - name: Install dependencies
@@ -61,15 +61,15 @@ jobs:
     - name: Create DMG (optional)
       run: |
         # Basic DMG creation (you can customize this)
-        hdiutil create -volname "MIDI HID Viewer" -srcfolder "dist/MIDI HID Viewer.app" -ov -format UDZO "dist/MIDI HID Viewer-${{ needs.prepare.outputs.version }}-mac.dmg"
+        hdiutil create -volname "MIDI/HID Inspektr" -srcfolder "dist/MIDI/HID Inspektr.app" -ov -format UDZO "dist/MIDI/HID Inspektr-${{ needs.prepare.outputs.version }}-mac.dmg"
       
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
         name: midi-hid-viewer-macos
         path: |
-          dist/MIDI HID Viewer.app/
-          dist/MIDI HID Viewer-*.dmg
+          dist/MIDI/HID Inspektr.app/
+          dist/MIDI/HID Inspektr-*.dmg
 
   build-linux:
     needs: prepare
@@ -87,7 +87,7 @@ jobs:
     - name: Generate version file
       run: |
         echo "VERSION = '${{ needs.prepare.outputs.version }}'" > version.py
-        echo "APP_NAME = 'MIDI HID Viewer'" >> version.py
+        echo "APP_NAME = 'MIDI/HID Inspektr'" >> version.py
         echo "BUILD_DATE = '$(date)'" >> version.py
         
     - name: Install dependencies
@@ -106,14 +106,14 @@ jobs:
     - name: Create tarball
       run: |
         cd dist
-        tar -czvf "MIDI_HID_Viewer-${{ needs.prepare.outputs.version }}-linux.tar.gz" "MIDI HID Viewer"
+        tar -czvf "MIDI_HID_Viewer-${{ needs.prepare.outputs.version }}-linux.tar.gz" "MIDI/HID Inspektr"
         
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
         name: midi-hid-viewer-linux
         path: |
-          dist/MIDI HID Viewer/
+          dist/MIDI/HID Inspektr/
           dist/*.tar.gz
 
   build-windows:
@@ -132,7 +132,7 @@ jobs:
     - name: Generate version file
       run: |
         echo "VERSION = '${{ needs.prepare.outputs.version }}'" > version.py
-        echo "APP_NAME = 'MIDI HID Viewer'" >> version.py
+        echo "APP_NAME = 'MIDI/HID Inspektr'" >> version.py
         echo "BUILD_DATE = '$(date)'" >> version.py
         
     - name: Install dependencies
@@ -149,12 +149,12 @@ jobs:
     - name: Create ZIP archive
       run: |
         cd dist
-        powershell Compress-Archive -Path "MIDI HID Viewer" -DestinationPath "MIDI_HID_Viewer-${{ needs.prepare.outputs.version }}-windows.zip"
+        powershell Compress-Archive -Path "MIDI/HID Inspektr" -DestinationPath "MIDI_HID_Viewer-${{ needs.prepare.outputs.version }}-windows.zip"
         
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
         name: midi-hid-viewer-windows
         path: |
-          dist/MIDI HID Viewer/
+          dist/MIDI/HID Inspektr/
           dist/*.zip
