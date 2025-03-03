@@ -1,4 +1,4 @@
-# MIDI/HID Controller Mapping Documentation Tool
+# MIDI/HID Inspektr
 
 A cross-platform tool for viewing MIDI and HID controller Activity.
 
@@ -6,7 +6,6 @@ A cross-platform tool for viewing MIDI and HID controller Activity.
 
 - **Device Detection**: Automatically detects connected MIDI and HID devices
 - **Real-time Capture**: Records MIDI/HID messages as you interact with your controller
-- **Multiple Export Formats**: Export as HTML, JSON, or CSV
 - **Low Footprint**: Efficient Python implementation with minimal resource usage
 - **Cross-Platform**: Works on Windows, macOS, and Linux
 
