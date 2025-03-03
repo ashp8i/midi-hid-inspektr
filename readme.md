@@ -54,6 +54,7 @@ uv pip install -r requirements.txt
 
 # Run the application
 python main.py
+```
 
 # Instructions for building App Package from source
 To build the MIDI-HID-Inspektr project using the build_helper.py script:
@@ -71,3 +72,4 @@ python3 build_helper.py --platform windows --version 1.0.0
 
 # Build for Linux
 python3 build_helper.py --platform linux --version 1.0.0
+```
