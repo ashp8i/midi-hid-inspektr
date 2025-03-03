@@ -1,0 +1,80 @@
+# -*- mode: python ; coding: utf-8 -*-
+
+import os
+from pathlib import Path
+
+block_cipher = None
+
+# Import version if available
+version_string = "{{VERSION}}"
+app_name = "{{APP_NAME}}"
+
+# Collect data files
+datas = [
+    ('resources/icons/', 'resources/icons/'),
+    # Add other resource folders as needed
+]
+
+a = Analysis(
+    ['main.py'],
+    pathex=[],
+    binaries=[],
+    datas=datas,
+    hiddenimports=[],
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[],
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=block_cipher,
+    noarchive=False,
+)
+
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    [],
+    exclude_binaries=True,
+    name=app_name,
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    icon='{{ICON_PATH}}',
+)
+
+# Platform-specific Bundle creation
+bundle_options = {
+    'name': f'{app_name}.app',
+    'icon': '{{ICON_PATH}}',
+    'version': version_string,
+}
+
+# Add macOS specific options
+if os.name == 'posix' and os.uname().sysname == 'Darwin':
+    bundle_options['bundle_identifier'] = '{{BUNDLE_ID}}'
+    bundle_options['info_plist'] = {
+        'CFBundleName': app_name,
+        'CFBundleDisplayName': app_name,
+        'CFBundleExecutable': app_name,
+        'CFBundlePackageType': 'APPL',
+        'CFBundleInfoDictionaryVersion': '6.0',
+        'NSHighResolutionCapable': True,
+        'NSHumanReadableCopyright': f'© 2025 Your Company',
+        'NSPrincipalClass': 'NSApplication',
+        'CFBundleGetInfoString': 'MIDI and HID device visualization tool',
+    }
+    
+    app = BUNDLE(exe, a.binaries, a.zipfiles, a.datas, **bundle_options)
+else:
+    # For Windows and Linux, we just use a directory
+    coll = COLLECT(exe, a.binaries, a.zipfiles, a.datas, name=app_name)

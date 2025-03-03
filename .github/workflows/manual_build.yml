@@ -1,0 +1,160 @@
+name: Manual Build
+
+on:
+  # Only run manually from GitHub Actions tab
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to build for'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - macos
+        - linux
+        - windows
+      version:
+        description: 'Version tag (e.g., 1.0.0)'
+        required: true
+        default: 'dev'
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.set-version.outputs.version }}
+    steps:
+    - id: set-version
+      run: echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+    
+  build-macos:
+    needs: prepare
+    if: ${{ github.event.inputs.platform == 'macos' || github.event.inputs.platform == 'all' }}
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        
+    - name: Generate version file
+      run: |
+        echo "VERSION = '${{ needs.prepare.outputs.version }}'" > version.py
+        echo "APP_NAME = 'MIDI HID Viewer'" >> version.py
+        echo "BUILD_DATE = '$(date)'" >> version.py
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+        
+    - name: Build with PyInstaller
+      run: |
+        # Use build helper script for macOS
+        python build_helper.py --platform macos --version ${{ needs.prepare.outputs.version }}
+        
+    - name: Create DMG (optional)
+      run: |
+        # Basic DMG creation (you can customize this)
+        hdiutil create -volname "MIDI HID Viewer" -srcfolder "dist/MIDI HID Viewer.app" -ov -format UDZO "dist/MIDI HID Viewer-${{ needs.prepare.outputs.version }}-mac.dmg"
+      
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: midi-hid-viewer-macos
+        path: |
+          dist/MIDI HID Viewer.app/
+          dist/MIDI HID Viewer-*.dmg
+
+  build-linux:
+    needs: prepare
+    if: ${{ github.event.inputs.platform == 'linux' || github.event.inputs.platform == 'all' }}
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        
+    - name: Generate version file
+      run: |
+        echo "VERSION = '${{ needs.prepare.outputs.version }}'" > version.py
+        echo "APP_NAME = 'MIDI HID Viewer'" >> version.py
+        echo "BUILD_DATE = '$(date)'" >> version.py
+        
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-dev libffi-dev qt5-default
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+        
+    - name: Build with PyInstaller
+      run: |
+        # Use build helper script for Linux
+        python build_helper.py --platform linux --version ${{ needs.prepare.outputs.version }}
+        
+    - name: Create tarball
+      run: |
+        cd dist
+        tar -czvf "MIDI_HID_Viewer-${{ needs.prepare.outputs.version }}-linux.tar.gz" "MIDI HID Viewer"
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: midi-hid-viewer-linux
+        path: |
+          dist/MIDI HID Viewer/
+          dist/*.tar.gz
+
+  build-windows:
+    needs: prepare
+    if: ${{ github.event.inputs.platform == 'windows' || github.event.inputs.platform == 'all' }}
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        
+    - name: Generate version file
+      run: |
+        echo "VERSION = '${{ needs.prepare.outputs.version }}'" > version.py
+        echo "APP_NAME = 'MIDI HID Viewer'" >> version.py
+        echo "BUILD_DATE = '$(date)'" >> version.py
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+        
+    - name: Build with PyInstaller
+      run: |
+        # Use build helper script for Windows
+        python build_helper.py --platform windows --version ${{ needs.prepare.outputs.version }}
+        
+    - name: Create ZIP archive
+      run: |
+        cd dist
+        powershell Compress-Archive -Path "MIDI HID Viewer" -DestinationPath "MIDI_HID_Viewer-${{ needs.prepare.outputs.version }}-windows.zip"
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: midi-hid-viewer-windows
+        path: |
+          dist/MIDI HID Viewer/
+          dist/*.zip
