@@ -58,11 +58,16 @@ python main.py
 # Instructions for building App Package from source
 To build the MIDI-HID-Inspektr project using the build_helper.py script:
 
-Platform Options
-python3 build_helper.py build --macos     # Build for macOS
-python3 build_helper.py build --windows   # Build for Windows
-python3 build_helper.py build --linux     # Build for Linux
+## MIDI-HID-Inspektr Build Instructions
 
-Build Types
-python3 build_helper.py build --debug     # Debug build with symbols
-python3 build_helper.py build --release   # Release build with optimizations
+```bash
+pip install pyinstaller
+
+# Build for macOS
+python3 build_helper.py --platform macos --version 1.0.0
+
+# Build for Windows
+python3 build_helper.py --platform windows --version 1.0.0 
+
+# Build for Linux
+python3 build_helper.py --platform linux --version 1.0.0
