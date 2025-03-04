@@ -16,6 +16,7 @@ is_ci = "CI" in os.environ or "GITHUB_ACTIONS" in os.environ
 logger.info(f"Python version: {sys.version}")
 logger.info(f"Python executable: {sys.executable}")
 
+
 def test_pyside6():
     """Test if PySide6 is properly installed and working."""
     try:
@@ -32,7 +33,7 @@ def test_pyside6():
             logger.info("Successfully created QApplication")
         else:
             logger.info("Skipping QApplication creation in CI environment")
-            
+
         assert True, "PySide6 import successful"
     except ImportError as e:
         if is_ci:
@@ -48,10 +49,12 @@ def test_pyside6():
             logger.error(f"Error initializing Qt: {e}")
             pytest.fail(f"Error initializing Qt: {e}")
 
+
 def test_rtmidi():
     """Test if rtmidi is properly installed."""
     try:
         import rtmidi
+
         logger.info("Successfully imported rtmidi")
         assert True, "rtmidi import successful"
     except ImportError as e:
@@ -62,10 +65,12 @@ def test_rtmidi():
             logger.error("Try reinstalling with: uv pip install python-rtmidi")
             pytest.fail(f"Failed to import rtmidi: {e}")
 
+
 def test_hidapi():
     """Test if hidapi is properly installed."""
     try:
         import hid
+
         logger.info("Successfully imported hidapi")
         assert True, "hidapi import successful"
     except ImportError as e:
@@ -76,12 +81,13 @@ def test_hidapi():
             logger.error("Try reinstalling with: uv pip install hidapi")
             pytest.fail(f"Failed to import hidapi: {e}")
 
+
 def test_all_core_dependencies():
     """Meta-test to ensure all core dependencies were successfully imported."""
     # This will automatically pass if all individual dependency tests pass
     # or be skipped if we're in CI and dependencies are missing
     if is_ci:
         pytest.skip("Skipping full dependency check in CI environment")
-    
+
     logger.info("All core dependencies successfully imported!")
     assert True, "All dependencies available"
