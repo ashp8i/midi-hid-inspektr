@@ -2,8 +2,9 @@
 import sys
 import logging
 
-logging.basicConfig(level=logging.INFO, 
-                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger("test_core")
 
 # Print basic system info
@@ -14,9 +15,10 @@ logger.info(f"Python executable: {sys.executable}")
 try:
     from PySide6 import QtCore
     from PySide6.QtWidgets import QApplication
+
     logger.info(f"PySide6 version: {QtCore.__version__}")
     logger.info(f"Qt version: {QtCore.qVersion()}")
-    
+
     # Create test QApplication to verify Qt works
     app = QApplication([])
     logger.info("Successfully created QApplication")
@@ -31,6 +33,7 @@ except Exception as e:
 # Test rtmidi
 try:
     import rtmidi
+
     logger.info("Successfully imported rtmidi")
 except ImportError as e:
     logger.error(f"Failed to import rtmidi: {e}")
@@ -40,6 +43,7 @@ except ImportError as e:
 # Test hidapi
 try:
     import hid
+
     logger.info("Successfully imported hidapi")
 except ImportError as e:
     logger.error(f"Failed to import hidapi: {e}")

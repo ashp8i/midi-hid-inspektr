@@ -1,5 +1,6 @@
 # midi_hid_app/style.py
 
+
 def get_dark_theme():
     """Returns a dark theme stylesheet for the application"""
     return """
@@ -252,6 +253,7 @@ def get_dark_theme():
         color: #E0E0E0;
     }
     """
+
 
 def get_light_theme():
     """Returns a light theme stylesheet for the application"""
