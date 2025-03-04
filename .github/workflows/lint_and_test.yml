@@ -23,7 +23,8 @@ jobs:
     - name: Install system dependencies for Qt
       run: |
         sudo apt-get update
-        sudo apt-get install -y libgl1-mesa-glx libegl1-mesa libxkbcommon-x11-0 libxcb-icccm4 \
+        # Updated package names for Ubuntu 24.04 (Noble)
+        sudo apt-get install -y libgl1 libegl1 libxkbcommon-x11-0 libxcb-icccm4 \
           libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
           libxcb-xinerama0 libxcb-xkb1 xvfb
         
@@ -56,6 +57,10 @@ jobs:
       
     - name: Test with pytest
       run: |
+        # Create an __init__.py file in tests directory if it doesn't exist
+        mkdir -p tests
+        touch tests/__init__.py
+        
         # Run tests with xvfb to provide virtual display for GUI tests
         xvfb-run -a pytest -v --collect-only
         xvfb-run -a pytest -v --cov=. --cov-report=xml
