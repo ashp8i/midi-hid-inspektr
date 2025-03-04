@@ -1,18 +1,23 @@
 #!/usr/bin/env python3
+# At the top of main.py
 import sys
 import os
+
+# Get the directory containing this script
+base_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Add it to the Python path if it's not already there
+if base_dir not in sys.path:
+    sys.path.insert(0, base_dir)
+
+# Now the imports should work
+from midi_hid_app.simple_ui import SimpleMainWindow
 import platform
 import argparse
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt
 import time
-
-# Add the parent directory to sys.path if needed
-current_dir = os.path.dirname(os.path.abspath(__file__))
-if current_dir not in sys.path:
-    sys.path.insert(0, current_dir)
-
 from midi_hid_app.splash import CustomSplash
 from midi_hid_app.simple_midi import SimpleMIDIHandler
 from midi_hid_app.simple_hid import SimpleHIDHandler
