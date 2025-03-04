@@ -1,4 +1,6 @@
 # midi_hid_app/style.py
+import os
+from PySide6.QtWidgets import QApplication
 
 def apply_platform_fixes(app):
     """Apply platform-specific style fixes while keeping native look"""
