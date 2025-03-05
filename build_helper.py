@@ -330,6 +330,126 @@ Filename: "{{app}}\\{{#MyAppExeName}}"; Description: "{{cm:LaunchProgram,{{#Stri
     return inno_script_path
 
 
+def create_macos_dmg(app_path, version, project_path="."):
+    """Create a DMG installer for macOS"""
+    app_name = "MIDI-HID Inspektr"
+    dmg_name = f"MIDI-HID-Inspektr-{version}"
+
+    # Create a directory for DMG resources if it doesn't exist
+    dmg_resources = os.path.join(project_path, "dmg_resources")
+    os.makedirs(dmg_resources, exist_ok=True)
+
+    # Path to the background image (create this 540x380 pixel image)
+    background_path = os.path.join(project_path, "resources/dmg_background.png")
+
+    # Build the DMG command
+    cmd = [
+        "create-dmg",
+        "--volname",
+        f"{app_name} Installer",
+        "--background",
+        background_path,
+        "--window-pos",
+        "200",
+        "120",
+        "--window-size",
+        "540",
+        "380",
+        "--icon-size",
+        "100",
+        "--icon",
+        f"{app_name}.app",
+        "140",
+        "150",
+        "--app-drop-link",
+        "400",
+        "150",
+        "--no-internet-enable",
+        f"{dmg_name}.dmg",
+        app_path,
+    ]
+
+    try:
+        # Execute the command
+        print(f"Creating DMG for {app_name}...")
+        subprocess.run(cmd, check=True)
+        print(f"DMG created: {dmg_name}.dmg")
+        return os.path.abspath(f"{dmg_name}.dmg")
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to create DMG: {e}")
+        return None
+
+
+# Alternative version using hdiutil (if you prefer this option)
+def create_macos_dmg_with_hdiutil(app_path, version, project_path="."):
+    """Create a basic DMG installer using hdiutil"""
+    app_name = "MIDI-HID Inspektr"
+    dmg_name = f"MIDI-HID-Inspektr-{version}"
+
+    # Create a temporary directory
+    temp_dir = os.path.join(project_path, "temp_dmg")
+    os.makedirs(temp_dir, exist_ok=True)
+
+    # Copy the .app to the temporary directory
+    app_in_temp = os.path.join(temp_dir, f"{app_name}.app")
+    if os.path.exists(app_in_temp):
+        shutil.rmtree(app_in_temp)
+    shutil.copytree(app_path, app_in_temp)
+
+    # Create a symbolic link to /Applications
+    applications_link = os.path.join(temp_dir, "Applications")
+    if os.path.exists(applications_link):
+        os.remove(applications_link)
+    os.symlink("/Applications", applications_link)
+
+    # Create the DMG
+    dmg_path = os.path.join(project_path, f"{dmg_name}.dmg")
+    if os.path.exists(dmg_path):
+        os.remove(dmg_path)
+
+    subprocess.run(
+        [
+            "hdiutil",
+            "create",
+            "-volname",
+            f"{app_name} Installer",
+            "-srcfolder",
+            temp_dir,
+            "-ov",
+            "-format",
+            "UDZO",
+            dmg_path,
+        ],
+        check=True,
+    )
+
+    # Clean up
+    shutil.rmtree(temp_dir)
+
+    print(f"DMG created: {dmg_path}")
+    return os.path.abspath(dmg_path)
+
+
+def build_macos(version, project_path="."):
+    # Update spec file
+    spec_file = update_spec_file("macos", version, project_path=project_path)
+
+    # Build with PyInstaller
+    build_command = ["pyinstaller", "--clean", spec_file]
+    subprocess.run(build_command, check=True)
+
+    # Locate the .app file in the dist directory
+    app_path = os.path.join(project_path, "dist", "MIDI-HID Inspektr.app")
+
+    # Create DMG
+    dmg_path = create_macos_dmg(app_path, version, project_path)
+    # Or if you prefer the hdiutil version:
+    # dmg_path = create_macos_dmg_with_hdiutil(app_path, version, project_path)
+
+    # Return paths to built artifacts
+    return {"app": app_path, "dmg": dmg_path}
+
+
 def build_windows(version, portable=False, installer=False, project_path="."):
     """Build Windows application"""
     app_name = "MIDI-HID Inspektr"
