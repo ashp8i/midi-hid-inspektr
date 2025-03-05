@@ -101,19 +101,22 @@ def update_spec_file(platform, version, portable=False, project_path="."):
 
     # Platform-specific replacements
     if platform == "macos":
-        replacements["{{ICON_PATH}}"] = os.path.join(
-            project_path, "resources/icons/app_icon.icns"
-        )
+        icon_path = os.path.join(project_path, "resources/icons/app_icon.icns")
+        replacements["{{ICON_PATH}}"] = str(
+            Path(icon_path).as_posix()
+        )  # Convert to forward slashes
         replacements["{{BUNDLE_ID}}"] = "com.yourashp8i.midiinspektr"
     elif platform == "linux":
-        replacements["{{ICON_PATH}}"] = os.path.join(
-            project_path, "resources/icons/app_icon.png"
-        )
+        icon_path = os.path.join(project_path, "resources/icons/app_icon.png")
+        replacements["{{ICON_PATH}}"] = str(
+            Path(icon_path).as_posix()
+        )  # Convert to forward slashes
         replacements["{{BUNDLE_ID}}"] = ""  # Not used on Linux
     elif platform == "windows":
-        replacements["{{ICON_PATH}}"] = os.path.join(
-            project_path, "resources/icons/app_icon.ico"
-        )
+        icon_path = os.path.join(project_path, "resources/icons/app_icon.ico")
+        replacements["{{ICON_PATH}}"] = str(
+            Path(icon_path).as_posix()
+        )  # Convert to forward slashes
         replacements["{{BUNDLE_ID}}"] = ""  # Not used on Windows
 
     # Apply replacements
