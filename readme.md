@@ -90,6 +90,11 @@ pip install pyinstaller
 ### Building on Windows
 To build the application on Windows, you have several options:
 
+First, activate your virtual environment: On Windows Terminal
+```bash
+. path\to\venv\Scripts\Activate.ps1
+```
+
 #### Option 1: Build from the current directory
 If you're already in the project directory, you can simply run:
 
