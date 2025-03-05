@@ -31,19 +31,43 @@ A cross-platform tool for viewing MIDI and HID controller Activity.
 3. For .deb: Install with `sudo dpkg -i midi-doc-tool.deb`
 4. For .rpm: Install with `sudo rpm -i midi-doc-tool.rpm` -->
 
-### From Source
+Here's an enhanced "Building from Source" section for your README.md that properly addresses the Windows requirements:
 
-Requirements:
+```markdown
+## Building from Source
+
+### Prerequisites
+
+#### All Platforms
 - Python 3.7 or higher
 - UV package manager (recommended) or pip
 
+#### Windows-specific Requirements
+- **Visual Studio Community Edition** with "Python Development" workload installed
+  - This is required to build native dependencies like python-rtmidi
+  - During Visual Studio installation, be sure to select the "Python development" workload
+- **Inno Setup** (optional, only needed for building installers)
+  - Download from [jrsoftware.org/isdl.php](https://jrsoftware.org/isdl.php)
+
+#### macOS-specific Requirements
+- Xcode Command Line Tools
+  - Install with: `xcode-select --install`
+
+#### Linux-specific Requirements
+- Development packages for ALSA and JACK
+  - Debian/Ubuntu: `sudo apt-get install libasound2-dev libjack-jackd2-dev`
+  - Fedora/RHEL: `sudo dnf install alsa-lib-devel jack-audio-connection-kit-devel`
+
+### Basic Setup
+
 ```bash
 # Clone the repository
-git clone https://github.com/ashp8i//midi-hid-inspektr.git
-cd midi-doc-tool
+git clone https://github.com/ashp8i/midi-hid-inspektr.git
+cd midi-hid-inspektr
 
 # Create and activate virtual environment with UV
 python -m uv venv .venv
+
 # On Windows:
 .venv\Scripts\activate
 # On macOS/Linux:
@@ -56,31 +80,58 @@ uv pip install -r requirements.txt
 python main.py
 ```
 
-# Instructions for building App Package from source
-To build the MIDI-HID-Inspektr project using the build_helper.py script:
+### Building Application Packages
 
-## MIDI-HID-Inspektr Build Instructions
+First, install the build requirements:
 
 ```bash
+uv pip install -r build-requirements.txt
+# or
 pip install pyinstaller
-or
-pip install -r build-requirements.txt
+```
 
-# Build for macOS
-python3 build_helper.py --platform macos --version 1.0.0
+#### Building on Windows
 
+```bash
 # Build standard Windows app
-python build_helper.py --platform windows --version 1.0.0 --project-path "C:\Users\yourusername\Downloads\midi-hid-inspektr"
+python build_helper.py --platform windows --version 1.0.0 --project-path "C:\path\to\midi-hid-inspektr"
 
 # Build portable Windows executable
-python build_helper.py --platform windows --version 1.0.0 --project-path "C:\Users\yourusername\Downloads\midi-hid-inspektr" --portable
+python build_helper.py --platform windows --version 1.0.0 --project-path "C:\path\to\midi-hid-inspektr" --portable
 
-# Build Windows installer
-python build_helper.py --platform windows --version 1.0.0 --project-path "C:\Users\yourusername\Downloads\midi-hid-inspektr" --installer
+# Build Windows installer (requires Inno Setup)
+python build_helper.py --platform windows --version 1.0.0 --project-path "C:\path\to\midi-hid-inspektr" --installer
 
 # Build both portable executable and installer
-python build_helper.py --platform windows --version 1.0.0 --project-path "C:\Users\yourusername\Downloads\midi-hid-inspektr" --portable --installer
+python build_helper.py --platform windows --version 1.0.0 --project-path "C:\path\to\midi-hid-inspektr" --portable --installer
+```
 
-# Build for Linux
+#### Windows Troubleshooting
+
+- If you encounter errors installing python-rtmidi:
+  - Make sure Visual Studio is installed with the "Python development" workload
+  - Try: `uv pip install python-rtmidi --no-binary python-rtmidi`
+
+- If you get "ImportError: DLL load failed" when running the app:
+  - Make sure you have the Microsoft Visual C++ Redistributable installed
+  - For MIDI functionality, ensure you have an MIDI service like Windows MIDI Services or loopMIDI installed
+
+#### Building on macOS
+
+```bash
+python3 build_helper.py --platform macos --version 1.0.0
+```
+
+#### Building on Linux
+
+```bash
 python3 build_helper.py --platform linux --version 1.0.0
+```
+
+### Advanced Packaging Options
+
+The build script supports customizing locations and adding resources. See the extended documentation for more options:
+
+```bash
+python build_helper.py --help
 ```
