@@ -126,11 +126,13 @@ Python-rtmidi installation issues: Make sure Visual Studio is installed with the
 Building on macOS and Linux
 The build process for macOS and Linux is similar:
 
-```# macOS
+```
+# macOS
 python3 build_helper.py --platform macos --version 1.0.0
 
 # Linux
-python3 build_helper.py --platform linux --version 1.0.0```
+python3 build_helper.py --platform linux --version 1.0.0
+```
 
 ### Advanced Packaging Options
 
