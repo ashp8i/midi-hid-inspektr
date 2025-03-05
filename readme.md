@@ -87,10 +87,10 @@ uv pip install -r build-requirements.txt
 pip install pyinstaller
 ```
 
-## Building on Windows
+#### Building on Windows
 To build the application on Windows, you have several options:
 
-# Option 1: Build from the current directory
+##### Option 1: Build from the current directory
 If you're already in the project directory, you can simply run:
 
 ```# Navigate to the project directory first
@@ -117,14 +117,14 @@ python build_helper.py --platform windows --version 1.0.0 --project-path "C:\Use
 # For an installer (requires Inno Setup)
 python build_helper.py --platform windows --version 1.0.0 --project-path "C:\Users\YourUsername\Downloads\midi-hid-inspektr" --installer
 ```
-Important: Make sure to replace C:\Users\YourUsername\Downloads\midi-hid-inspektr with the actual path where you cloned the repository.
+##### Important: Make sure to replace C:\Users\YourUsername\Downloads\midi-hid-inspektr with the actual path where you cloned the repository.
 
-## Windows Troubleshooting
+##### Windows Troubleshooting
 Path not found error: Make sure you're using your actual project path, not the example placeholder
 Build fails with missing files: Ensure you're in the project directory or providing the correct --project-path
 Python-rtmidi installation issues: Make sure Visual Studio is installed with the "Python development" workload
 
-## Building on macOS and Linux
+#### Building on macOS and Linux
 The build process for macOS and Linux is similar:
 
 ```
