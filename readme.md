@@ -70,16 +70,16 @@ pip install -r build-requirements.txt
 python3 build_helper.py --platform macos --version 1.0.0
 
 # Build standard Windows app
-python build_helper.py --platform windows --version 1.0.0
+python build_helper.py --platform windows --version 1.0.0 --project-path "C:\Users\yourusername\Downloads\midi-hid-inspektr"
 
 # Build portable Windows executable
-python build_helper.py --platform windows --version 1.0.0 --portable
+python build_helper.py --platform windows --version 1.0.0 --project-path "C:\Users\yourusername\Downloads\midi-hid-inspektr" --portable
 
 # Build Windows installer
-python build_helper.py --platform windows --version 1.0.0 --installer
+python build_helper.py --platform windows --version 1.0.0 --project-path "C:\Users\yourusername\Downloads\midi-hid-inspektr" --installer
 
 # Build both portable executable and installer
-python build_helper.py --platform windows --version 1.0.0 --portable --installer
+python build_helper.py --platform windows --version 1.0.0 --project-path "C:\Users\yourusername\Downloads\midi-hid-inspektr" --portable --installer
 
 # Build for Linux
 python3 build_helper.py --platform linux --version 1.0.0
