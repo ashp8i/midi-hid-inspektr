@@ -103,12 +103,14 @@ python build_helper.py --platform windows --version 1.0.0
 python build_helper.py --platform windows --version 1.0.0 --portable
 
 # For an installer (requires Inno Setup)
-python build_helper.py --platform windows --version 1.0.0 --installer```
+python build_helper.py --platform windows --version 1.0.0 --installer
+```
 
-Option 2: Build from any location (specifying the project path)
+#### Option 2: Build from any location (specifying the project path)
 If you want to build from another location, specify the correct path to your project:
 
-```# Replace this with YOUR ACTUAL PATH to the project
+```
+# Replace this with YOUR ACTUAL PATH to the project
 python build_helper.py --platform windows --version 1.0.0 --project-path "C:\Users\YourUsername\Downloads\midi-hid-inspektr"
 
 # For a portable executable 
