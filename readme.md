@@ -140,28 +140,35 @@ The build script supports customizing locations and adding resources. See the ex
 python build_helper.py --help
 ```
 
-Disclaimer
-USE AT YOUR OWN RISK: This software is provided "as is", without warranty of any kind, express or implied. While the code has been tested to work in various environments, I cannot guarantee its reliability in all situations or accept responsibility for any issues that may arise from its usage.
+## Disclaimer
 
-The software may contain bugs or errors that could potentially affect your system or other software.
-Always back up your data before connecting devices or using software that interacts with system hardware.
-This tool is designed for educational and diagnostic purposes only.
-License
+**USE AT YOUR OWN RISK**: This software is provided "as is", without warranty of any kind, express or implied. While the code has been tested to work in various environments, I cannot guarantee its reliability in all situations or accept responsibility for any issues that may arise from its usage.
+
+- The software may contain bugs or errors that could potentially affect your system or other software.
+- Always back up your data before connecting devices or using software that interacts with system hardware.
+- This tool is designed for educational and diagnostic purposes only.
+
+## License
+
 This project is released under the GNU General Public License v3.0 (GPL-3.0), making it free and open-source software. The GPL license ensures that:
 
-You can use, modify, and distribute this software freely
-Any modifications or derivative works must also be open-source and GPL-compatible
-The complete source code must be made available when distributing the software
+- You can use, modify, and distribute this software freely
+- Any modifications or derivative works must also be open-source and GPL-compatible
+- The complete source code must be made available when distributing the software
+
 For the full license text, please see the LICENSE file in the repository.
 
-Contributing
+## Contributing
+
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-Fork the repository
-Create your feature branch (git checkout -b feature/amazing-feature)
-Commit your changes (git commit -m 'Add some amazing feature')
-Push to the branch (git push origin feature/amazing-feature)
-Open a Pull Request
-Acknowledgments
-Thanks to all the contributors who have helped with this project
-Built with Python and Qt framework
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## Acknowledgments
+
+- Thanks to all the contributors who have helped with this project
+- Built with Python and Qt framework
