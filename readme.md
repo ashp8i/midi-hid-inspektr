@@ -87,10 +87,10 @@ uv pip install -r build-requirements.txt
 pip install pyinstaller
 ```
 
-#### Building on Windows
+### Building on Windows
 To build the application on Windows, you have several options:
 
-##### Option 1: Build from the current directory
+#### Option 1: Build from the current directory
 If you're already in the project directory, you can simply run:
 
 ```# Navigate to the project directory first
@@ -126,7 +126,7 @@ Path not found error: Make sure you're using your actual project path, not the e
 Build fails with missing files: Ensure you're in the project directory or providing the correct --project-path
 Python-rtmidi installation issues: Make sure Visual Studio is installed with the "Python development" workload
 
-#### Building on macOS and Linux
+### Building on macOS and Linux
 The build process for macOS and Linux is similar:
 
 ```
