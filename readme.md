@@ -31,9 +31,6 @@ A cross-platform tool for viewing MIDI and HID controller Activity.
 3. For .deb: Install with `sudo dpkg -i midi-doc-tool.deb`
 4. For .rpm: Install with `sudo rpm -i midi-doc-tool.rpm` -->
 
-Here's an enhanced "Building from Source" section for your README.md that properly addresses the Windows requirements:
-
-```markdown
 ## Building from Source
 
 ### Prerequisites
