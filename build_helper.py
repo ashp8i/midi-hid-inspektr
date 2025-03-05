@@ -43,17 +43,23 @@ def setup_environment(project_path=None):
     """Set up environment variables for the build process"""
     # If project path is provided, add it to PYTHONPATH
     if project_path:
-        project_path = os.path.abspath(project_path)
-        print(f"Setting PYTHONPATH to: {project_path}")
+        # Check if the provided path actually exists
+        if not os.path.exists(project_path):
+            print(f"Warning: The provided path '{project_path}' does not exist.")
+            print("Using current directory instead.")
+            project_path = os.path.abspath(os.curdir)
+        else:
+            project_path = os.path.abspath(project_path)
+            print(f"Setting PYTHONPATH to: {project_path}")
 
-        # Add to Python path for the current process
-        sys.path.insert(0, project_path)
+            # Add to Python path for the current process
+            sys.path.insert(0, project_path)
 
-        # Set environment variable for child processes
-        os.environ["PYTHONPATH"] = project_path
+            # Set environment variable for child processes
+            os.environ["PYTHONPATH"] = project_path
 
-        # Change to project directory
-        os.chdir(project_path)
+            # Change to project directory
+            os.chdir(project_path)
     else:
         # Get current directory as project path
         project_path = os.path.abspath(os.curdir)
