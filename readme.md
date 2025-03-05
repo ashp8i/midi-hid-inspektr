@@ -81,49 +81,56 @@ python main.py
 
 First, install the build requirements:
 
-```bash
+```
 uv pip install -r build-requirements.txt
 # or
 pip install pyinstaller
 ```
 
-#### Building on Windows
+Building on Windows
+To build the application on Windows, you have several options:
 
-```bash
-# Build standard Windows app
-python build_helper.py --platform windows --version 1.0.0 --project-path "C:\path\to\midi-hid-inspektr"
+Option 1: Build from the current directory
+If you're already in the project directory, you can simply run:
 
-# Build portable Windows executable
-python build_helper.py --platform windows --version 1.0.0 --project-path "C:\path\to\midi-hid-inspektr" --portable
+```# Navigate to the project directory first
+cd C:\path\to\midi-hid-inspektr
 
-# Build Windows installer (requires Inno Setup)
-python build_helper.py --platform windows --version 1.0.0 --project-path "C:\path\to\midi-hid-inspektr" --installer
+# Build using the current directory
+python build_helper.py --platform windows --version 1.0.0 
 
-# Build both portable executable and installer
-python build_helper.py --platform windows --version 1.0.0 --project-path "C:\path\to\midi-hid-inspektr" --portable --installer
+# For a portable executable
+python build_helper.py --platform windows --version 1.0.0 --portable
+
+# For an installer (requires Inno Setup)
+python build_helper.py --platform windows --version 1.0.0 --installer```
+
+Option 2: Build from any location (specifying the project path)
+If you want to build from another location, specify the correct path to your project:
+
+```# Replace this with YOUR ACTUAL PATH to the project
+python build_helper.py --platform windows --version 1.0.0 --project-path "C:\Users\YourUsername\Downloads\midi-hid-inspektr"
+
+# For a portable executable 
+python build_helper.py --platform windows --version 1.0.0 --project-path "C:\Users\YourUsername\Downloads\midi-hid-inspektr" --portable
+
+# For an installer (requires Inno Setup)
+python build_helper.py --platform windows --version 1.0.0 --project-path "C:\Users\YourUsername\Downloads\midi-hid-inspektr" --installer
 ```
+Important: Make sure to replace C:\Users\YourUsername\Downloads\midi-hid-inspektr with the actual path where you cloned the repository.
 
-#### Windows Troubleshooting
+Windows Troubleshooting
+Path not found error: Make sure you're using your actual project path, not the example placeholder
+Build fails with missing files: Ensure you're in the project directory or providing the correct --project-path
+Python-rtmidi installation issues: Make sure Visual Studio is installed with the "Python development" workload
+Building on macOS and Linux
+The build process for macOS and Linux is similar:
 
-- If you encounter errors installing python-rtmidi:
-  - Make sure Visual Studio is installed with the "Python development" workload
-  - Try: `uv pip install python-rtmidi --no-binary python-rtmidi`
-
-- If you get "ImportError: DLL load failed" when running the app:
-  - Make sure you have the Microsoft Visual C++ Redistributable installed
-  - For MIDI functionality, ensure you have an MIDI service like Windows MIDI Services or loopMIDI installed
-
-#### Building on macOS
-
-```bash
+```# macOS
 python3 build_helper.py --platform macos --version 1.0.0
-```
 
-#### Building on Linux
-
-```bash
-python3 build_helper.py --platform linux --version 1.0.0
-```
+# Linux
+python3 build_helper.py --platform linux --version 1.0.0```
 
 ### Advanced Packaging Options
 
