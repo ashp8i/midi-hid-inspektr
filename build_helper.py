@@ -648,15 +648,16 @@ exec /usr/lib/{file_safe_name}/{app_name} "$@"
         )
 
         # Copy desktop file to both locations (AppDir root and standard location)
-        desktop_content = f"""[Desktop Entry]
-    Type=Application
-    Name={app_name}
-    Exec={file_safe_name}
-    Icon={file_safe_name}
-    Comment={description}
-    Categories=Utility;AudioVideo;
-    Terminal=false
-    """
+        desktop_content = (
+            "[Desktop Entry]\n"
+            "Type=Application\n"
+            "Name=MIDI-HID Inspektr\n"
+            "Exec=midi-hid-inspektr\n"
+            "Icon=midi-hid-inspektr\n"
+            "Comment=Tool for inspecting MIDI and HID devices\n"
+            "Categories=Utility;\n"
+            "Terminal=false"
+        )
         # Create desktop file specific for AppImage
         with open(
             os.path.join(appdir, "usr/share/applications", f"{file_safe_name}.desktop"),
