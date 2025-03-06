@@ -496,13 +496,104 @@ def create_linux_packages(app_path, version, project_path=".", packaging_tools=N
     print("Creating Linux packages...")
     results = {}
 
-    # Rest of your function remains the same, but replace the RPM section with:
+    # Create a temp directory for packaging
+    packaging_temp_dir = os.path.join(project_path, "linux_packaging")
+    if os.path.exists(packaging_temp_dir):
+        shutil.rmtree(packaging_temp_dir)
+    os.makedirs(packaging_temp_dir, exist_ok=True)
+
+    # Prepare desktop entry
+    desktop_file_content = f"""[Desktop Entry]
+Name={app_name}
+Comment={description}
+Exec=/usr/bin/{file_safe_name}
+Icon=/usr/share/pixmaps/{file_safe_name}.png
+Terminal=false
+Type=Application
+Categories=Utility;AudioVideo;Music;
+Keywords=MIDI;HID;USB;Inspector;
+"""
+
+    # Create desktop file
+    desktop_file_path = os.path.join(packaging_temp_dir, f"{file_safe_name}.desktop")
+    with open(desktop_file_path, "w") as f:
+        f.write(desktop_file_content)
+
+    # Copy icon for packaging
+    icon_source = os.path.join(project_path, "resources/icons/app_icon.png")
+    icon_dest = os.path.join(packaging_temp_dir, f"{file_safe_name}.png")
+    shutil.copy(icon_source, icon_dest)
+
+    # Create .deb package
+    deb_path = None
+    try:
+        print("Creating .deb package...")
+        deb_path = os.path.join(project_path, f"{file_safe_name}_{version}_amd64.deb")
+
+        # Make sure the app binary is executable
+        app_binary = os.path.join(app_path, app_name)
+        if os.path.exists(app_binary):
+            os.chmod(app_binary, 0o755)
+
+        # Only attempt to use FPM if it's available
+        if packaging_tools.get("fpm", False):
+            # Build .deb package using fpm
+            cmd = [
+                "fpm",
+                "-s",
+                "dir",
+                "-t",
+                "deb",
+                "-n",
+                file_safe_name,
+                "-v",
+                version,
+                "--description",
+                description,
+                "--url",
+                website,
+                "--maintainer",
+                maintainer,
+                "--license",
+                license_type,
+                "--category",
+                "utils",
+                "--deb-no-default-config-files",
+                f"{app_path}/={'/usr/lib/' + file_safe_name}",
+                f"{desktop_file_path}=/usr/share/applications/{file_safe_name}.desktop",
+                f"{icon_dest}=/usr/share/pixmaps/{file_safe_name}.png",
+            ]
+
+            # Create a wrapper script that launches the application
+            wrapper_script = os.path.join(packaging_temp_dir, file_safe_name)
+            with open(wrapper_script, "w") as f:
+                f.write(
+                    f"""#!/bin/sh
+exec /usr/lib/{file_safe_name}/{app_name} "$@"
+"""
+                )
+            os.chmod(wrapper_script, 0o755)
+
+            # Add the wrapper script to the package
+            cmd.append(f"{wrapper_script}=/usr/bin/{file_safe_name}")
+
+            # Run fpm to create the .deb package
+            subprocess.run(cmd, check=True)
+            results["deb"] = deb_path
+            print(f"Created .deb package: {deb_path}")
+        else:
+            print("FPM not found. Skipping .deb package creation.")
+            print("Install FPM to create .deb packages: gem install fpm")
+
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        print(f"Error creating .deb package: {e}")
+        print("Make sure 'fpm' is installed: gem install fpm")
 
     # Create .rpm package
     try:
         print("Creating .rpm package...")
-        if packaging_tools.get("fpm", False):
-            # First try with FPM if available
+        if packaging_tools.get("fpm", False) and deb_path and os.path.exists(deb_path):
+            # First try with FPM if available and we have a .deb
             rpm_path = os.path.join(
                 project_path, f"{file_safe_name}-{version}-1.x86_64.rpm"
             )
@@ -512,11 +603,15 @@ def create_linux_packages(app_path, version, project_path=".", packaging_tools=N
             print(f"Created .rpm package (FPM): {rpm_path}")
         elif packaging_tools.get("rpmbuild", False):
             # Fall back to native RPM build
-            print("FPM not available, trying native RPM build...")
+            print("Using native RPM build...")
             rpm_path = create_rpm_native(app_path, version, project_path)
             if rpm_path:
                 results["rpm"] = rpm_path
-        elif packaging_tools.get("alien", False):
+        elif (
+            packaging_tools.get("alien", False)
+            and deb_path
+            and os.path.exists(deb_path)
+        ):
             # Last resort: use alien to convert
             print("Using alien to convert .deb to .rpm...")
             rpm_path = os.path.join(
@@ -532,13 +627,11 @@ def create_linux_packages(app_path, version, project_path=".", packaging_tools=N
     except Exception as e:
         print(f"Error creating .rpm package: {e}")
 
-    # Rest of your function for AppImage creation...
-
     # Create AppImage if appimagetool is available
     try:
         print("Creating AppImage...")
         # Set up AppDir structure
-        appdir = os.path.join(temp_dir, "AppDir")
+        appdir = os.path.join(packaging_temp_dir, "AppDir")
         os.makedirs(appdir, exist_ok=True)
 
         # Copy the app to AppDir
@@ -601,9 +694,9 @@ exec "$HERE/usr/bin/{app_name}/{app_name}" "$@"
 
     # Clean up
     try:
-        shutil.rmtree(temp_dir)
+        shutil.rmtree(packaging_temp_dir)
     except:
-        print(f"Warning: Could not clean up temporary directory: {temp_dir}")
+        print(f"Warning: Could not clean up temporary directory: {packaging_temp_dir}")
 
     return results
 
