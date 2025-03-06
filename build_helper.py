@@ -340,7 +340,7 @@ def create_macos_dmg(app_path, version, project_path="."):
     os.makedirs(dmg_resources, exist_ok=True)
 
     # Path to the background image (create this 540x380 pixel image)
-    background_path = os.path.join(project_path, "resources/dmg_background.png")
+    background_path = os.path.join(project_path, "resources/images/dmg_background.png")
 
     # Build the DMG command
     cmd = [
@@ -428,6 +428,197 @@ def create_macos_dmg_with_hdiutil(app_path, version, project_path="."):
 
     print(f"DMG created: {dmg_path}")
     return os.path.abspath(dmg_path)
+
+
+def create_linux_packages(app_path, version, project_path="."):
+    """Create various Linux packages (.deb, .rpm, AppImage)"""
+    import subprocess
+    import os
+    import shutil
+    import tempfile
+    from pathlib import Path
+
+    app_name = "MIDI-HID Inspektr"
+    file_safe_name = (
+        "midi-hid-inspektr"  # Linux package names should be lowercase with hyphens
+    )
+    description = "Tool for inspecting MIDI and HID devices"
+    maintainer = "YourAshp8i <your.email@example.com>"
+    website = "https://github.com/yourashp8i/midi-hid-inspektr"
+    license_type = "MIT"  # Adjust according to your project
+
+    print("Creating Linux packages...")
+    results = {}
+
+    # Prepare desktop entry
+    desktop_file_content = f"""[Desktop Entry]
+Name={app_name}
+Comment={description}
+Exec=/usr/bin/{file_safe_name}
+Icon=/usr/share/pixmaps/{file_safe_name}.png
+Terminal=false
+Type=Application
+Categories=Utility;AudioVideo;Music;
+Keywords=MIDI;HID;USB;Inspector;
+"""
+
+    # Create a temp directory for packaging
+    temp_dir = os.path.join(project_path, "linux_packaging")
+    if os.path.exists(temp_dir):
+        shutil.rmtree(temp_dir)
+    os.makedirs(temp_dir, exist_ok=True)
+
+    # Create desktop file
+    desktop_file_path = os.path.join(temp_dir, f"{file_safe_name}.desktop")
+    with open(desktop_file_path, "w") as f:
+        f.write(desktop_file_content)
+
+    # Copy icon for packaging
+    icon_source = os.path.join(project_path, "resources/icons/app_icon.png")
+    icon_dest = os.path.join(temp_dir, f"{file_safe_name}.png")
+    shutil.copy(icon_source, icon_dest)
+
+    # Create .deb package using fpm if available
+    try:
+        print("Creating .deb package...")
+        deb_path = os.path.join(project_path, f"{file_safe_name}_{version}_amd64.deb")
+
+        # Make sure the app binary is executable
+        app_binary = os.path.join(app_path, app_name)
+        if os.path.exists(app_binary):
+            os.chmod(app_binary, 0o755)
+
+        # Build .deb package using fpm
+        cmd = [
+            "fpm",
+            "-s",
+            "dir",
+            "-t",
+            "deb",
+            "-n",
+            file_safe_name,
+            "-v",
+            version,
+            "--description",
+            description,
+            "--url",
+            website,
+            "--maintainer",
+            maintainer,
+            "--license",
+            license_type,
+            "--category",
+            "utils",
+            "--deb-no-default-config-files",
+            f"{app_path}/={'/usr/lib/' + file_safe_name}",
+            f"{desktop_file_path}=/usr/share/applications/{file_safe_name}.desktop",
+            f"{icon_dest}=/usr/share/pixmaps/{file_safe_name}.png",
+        ]
+
+        # Create a wrapper script that launches the application
+        wrapper_script = os.path.join(temp_dir, file_safe_name)
+        with open(wrapper_script, "w") as f:
+            f.write(
+                f"""#!/bin/sh
+exec /usr/lib/{file_safe_name}/{app_name} "$@"
+"""
+            )
+        os.chmod(wrapper_script, 0o755)
+
+        # Add the wrapper script to the package
+        cmd.append(f"{wrapper_script}=/usr/bin/{file_safe_name}")
+
+        # Run fpm to create the .deb package
+        subprocess.run(cmd, check=True)
+        results["deb"] = deb_path
+        print(f"Created .deb package: {deb_path}")
+
+        # Create .rpm package based on the .deb
+        print("Creating .rpm package...")
+        rpm_path = os.path.join(
+            project_path, f"{file_safe_name}-{version}-1.x86_64.rpm"
+        )
+        rpm_cmd = ["fpm", "-s", "deb", "-t", "rpm", deb_path]
+        subprocess.run(rpm_cmd, check=True)
+        results["rpm"] = rpm_path
+        print(f"Created .rpm package: {rpm_path}")
+
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        print(f"Error creating .deb/.rpm packages: {e}")
+        print("Make sure 'fpm' is installed: gem install fpm")
+
+    # Create AppImage if appimagetool is available
+    try:
+        print("Creating AppImage...")
+        # Set up AppDir structure
+        appdir = os.path.join(temp_dir, "AppDir")
+        os.makedirs(appdir, exist_ok=True)
+
+        # Copy the app to AppDir
+        app_dest = os.path.join(appdir, "usr")
+        os.makedirs(app_dest, exist_ok=True)
+        shutil.copytree(app_path, os.path.join(app_dest, "bin", app_name))
+
+        # Create .desktop file in AppDir
+        os.makedirs(os.path.join(appdir, "usr/share/applications"), exist_ok=True)
+        shutil.copy(desktop_file_path, os.path.join(appdir, "usr/share/applications/"))
+
+        # Copy icon to AppDir
+        os.makedirs(
+            os.path.join(appdir, "usr/share/icons/hicolor/256x256/apps"), exist_ok=True
+        )
+        shutil.copy(
+            icon_source,
+            os.path.join(
+                appdir, f"usr/share/icons/hicolor/256x256/apps/{file_safe_name}.png"
+            ),
+        )
+
+        # Create AppRun script
+        apprun_path = os.path.join(appdir, "AppRun")
+        with open(apprun_path, "w") as f:
+            f.write(
+                f"""#!/bin/sh
+SELF=$(readlink -f "$0")
+HERE=$(dirname "$SELF")
+export PATH="$HERE/usr/bin:$PATH"
+export LD_LIBRARY_PATH="$HERE/usr/lib:$LD_LIBRARY_PATH"
+exec "$HERE/usr/bin/{app_name}/{app_name}" "$@"
+"""
+            )
+        os.chmod(apprun_path, 0o755)
+
+        # Create symlinks in AppDir root
+        os.symlink(
+            f"usr/share/icons/hicolor/256x256/apps/{file_safe_name}.png",
+            os.path.join(appdir, f"{file_safe_name}.png"),
+        )
+        os.symlink(
+            f"usr/share/applications/{file_safe_name}.desktop",
+            os.path.join(appdir, f"{file_safe_name}.desktop"),
+        )
+
+        # Run appimagetool
+        appimage_path = os.path.join(
+            project_path, f"{file_safe_name}-{version}-x86_64.AppImage"
+        )
+        subprocess.run(["appimagetool", appdir, appimage_path], check=True)
+        results["appimage"] = appimage_path
+        print(f"Created AppImage: {appimage_path}")
+
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        print(f"Error creating AppImage: {e}")
+        print(
+            "Make sure 'appimagetool' is installed: https://github.com/AppImage/AppImageKit/releases"
+        )
+
+    # Clean up
+    try:
+        shutil.rmtree(temp_dir)
+    except:
+        print(f"Warning: Could not clean up temporary directory: {temp_dir}")
+
+    return results
 
 
 def build_macos(version, project_path="."):
@@ -523,6 +714,8 @@ def build(platform, version, portable=False, installer=False, project_path="."):
     else:
         # For macOS and Linux, use the standard build process
         spec_file = update_spec_file(platform, version, project_path=project_path)
+        app_name = "MIDI-HID Inspektr"
+        file_safe_name = "MIDI-HID-Inspektr"
 
         # Ensure clean build
         dist_dir = os.path.join(project_path, "dist")
@@ -540,6 +733,30 @@ def build(platform, version, portable=False, installer=False, project_path="."):
         print(f"Building for {platform}...")
         subprocess.run(cmd, check=True)
         print(f"Build completed for {platform}")
+
+        # For macOS, create DMG
+        if platform == "macos":
+            app_path = os.path.join(project_path, "dist", f"{app_name}.app")
+            if os.path.exists(app_path):
+                print("Creating macOS DMG installer...")
+                dmg_path = create_macos_dmg(app_path, version, project_path)
+                print(f"DMG created at: {dmg_path}")
+            else:
+                print(f"Error: .app package not found at {app_path}")
+
+        # For Linux, create packages
+        elif platform == "linux":
+            app_path = os.path.join(project_path, "dist", app_name)
+            if os.path.exists(app_path):
+                print("Creating Linux packages...")
+                packages = create_linux_packages(app_path, version, project_path)
+
+                # Print summary of created packages
+                print("\nLinux packages created:")
+                for pkg_type, path in packages.items():
+                    print(f"- {pkg_type.upper()}: {path}")
+            else:
+                print(f"Error: Application directory not found at {app_path}")
 
 
 def main():
