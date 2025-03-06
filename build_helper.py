@@ -707,6 +707,77 @@ def build_windows(version, portable=False, installer=False, project_path="."):
             print(f"Manually compile the installer script: {inno_script}")
 
 
+# def create_flatpak_manifest(version, project_path="."):
+#     """Create a Flatpak manifest for the application"""
+#     import json
+#     import os
+    
+#     app_name = "MIDI-HID Inspektr"
+#     app_id = "com.yourashp8i.MIDIHIDInspektr"
+#     file_safe_name = "midi-hid-inspektr"
+    
+#     # Create the flatpak manifest
+#     manifest = {
+#         "app-id": app_id,
+#         "runtime": "org.freedesktop.Platform",
+#         "runtime-version": "22.08",
+#         "sdk": "org.freedesktop.Sdk",
+#         "command": file_safe_name,
+#         "finish-args": [
+#             "--share=ipc",
+#             "--socket=x11",
+#             "--socket=wayland",
+#             "--device=all",    # For USB/MIDI/HID device access
+#             "--filesystem=host",
+#             "--share=network"
+#         ],
+#         "modules": [
+#             {
+#                 "name": file_safe_name,
+#                 "buildsystem": "simple",
+#                 "build-commands": [
+#                     f"install -D {file_safe_name} /app/bin/{file_safe_name}",
+#                     f"install -D {file_safe_name}.desktop /app/share/applications/{app_id}.desktop",
+#                     f"install -D {file_safe_name}.png /app/share/icons/hicolor/256x256/apps/{app_id}.png"
+#                 ],
+#                 "sources": [
+#                     {
+#                         "type": "file",
+#                         "path": f"dist/{app_name}/{app_name}",
+#                         "dest-filename": file_safe_name 
+#                     },
+#                     {
+#                         "type": "file",
+#                         "path": f"linux_packaging/{file_safe_name}.desktop",
+#                         "dest-filename": f"{file_safe_name}.desktop"
+#                     },
+#                     {
+#                         "type": "file",
+#                         "path": "resources/icons/app_icon.png",
+#                         "dest-filename": f"{file_safe_name}.png"
+#                     }
+#                 ]
+#             }
+#         ]
+#     }
+    
+#     # Create flatpak directory
+#     flatpak_dir = os.path.join(project_path, "flatpak")
+#     os.makedirs(flatpak_dir, exist_ok=True)
+    
+#     # Write manifest file
+#     manifest_path = os.path.join(flatpak_dir, f"{app_id}.json")
+#     with open(manifest_path, "w") as f:
+#         json.dump(manifest, f, indent=4)
+    
+#     print(f"Created Flatpak manifest: {manifest_path}")
+    
+#     # Create instructions file
+#     instructions_path = os.path.join(flatpak_dir, "README.md")
+    
+#     instructions_content = f"""# Flatpak Build Instructions for {app_name}
+
+
 def build(platform, version, portable=False, installer=False, project_path="."):
     """Build the application for the specified platform"""
     if platform == "windows":
