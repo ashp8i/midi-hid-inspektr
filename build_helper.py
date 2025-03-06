@@ -637,52 +637,73 @@ exec /usr/lib/{file_safe_name}/{app_name} "$@"
         # Copy the app to AppDir
         app_dest = os.path.join(appdir, "usr")
         os.makedirs(app_dest, exist_ok=True)
+        os.makedirs(os.path.join(app_dest, "bin"), exist_ok=True)
         shutil.copytree(app_path, os.path.join(app_dest, "bin", app_name))
 
-        # Create .desktop file in AppDir
+        # Create necessary directories
         os.makedirs(os.path.join(appdir, "usr/share/applications"), exist_ok=True)
-        shutil.copy(desktop_file_path, os.path.join(appdir, "usr/share/applications/"))
-
-        # Copy icon to AppDir
+        os.makedirs(os.path.join(appdir, "usr/share/pixmaps"), exist_ok=True)
         os.makedirs(
             os.path.join(appdir, "usr/share/icons/hicolor/256x256/apps"), exist_ok=True
         )
+
+        # Copy desktop file to both locations (AppDir root and standard location)
+        desktop_content = f"""[Desktop Entry]
+    Type=Application
+    Name={app_name}
+    Exec={file_safe_name}
+    Icon={file_safe_name}
+    Comment={description}
+    Categories=Utility;AudioVideo;
+    Terminal=false
+    """
+        # Create desktop file specific for AppImage
+        with open(
+            os.path.join(appdir, "usr/share/applications", f"{file_safe_name}.desktop"),
+            "w",
+        ) as f:
+            f.write(desktop_content)
+
+        # Also place it in root for AppImageTool to find
+        with open(os.path.join(appdir, f"{file_safe_name}.desktop"), "w") as f:
+            f.write(desktop_content)
+
+        # Copy icon to all necessary locations
+        icon_source = os.path.join(project_path, "resources/icons/app_icon.png")
+        # Standard location
         shutil.copy(
             icon_source,
             os.path.join(
-                appdir, f"usr/share/icons/hicolor/256x256/apps/{file_safe_name}.png"
+                appdir, "usr/share/icons/hicolor/256x256/apps", f"{file_safe_name}.png"
             ),
         )
+        # Pixmaps location
+        shutil.copy(
+            icon_source,
+            os.path.join(appdir, "usr/share/pixmaps", f"{file_safe_name}.png"),
+        )
+        # Root location for AppImageTool
+        shutil.copy(icon_source, os.path.join(appdir, f"{file_safe_name}.png"))
 
         # Create AppRun script
         apprun_path = os.path.join(appdir, "AppRun")
         with open(apprun_path, "w") as f:
             f.write(
                 f"""#!/bin/sh
-SELF=$(readlink -f "$0")
-HERE=$(dirname "$SELF")
-export PATH="$HERE/usr/bin:$PATH"
-export LD_LIBRARY_PATH="$HERE/usr/lib:$LD_LIBRARY_PATH"
-exec "$HERE/usr/bin/{app_name}/{app_name}" "$@"
-"""
+    SELF=$(readlink -f "$0")
+    HERE=$(dirname "$SELF")
+    export PATH="$HERE/usr/bin:$PATH"
+    export LD_LIBRARY_PATH="$HERE/usr/lib:$LD_LIBRARY_PATH"
+    exec "$HERE/usr/bin/{app_name}/{app_name}" "$@"
+    """
             )
         os.chmod(apprun_path, 0o755)
 
-        # Create symlinks in AppDir root
-        os.symlink(
-            f"usr/share/icons/hicolor/256x256/apps/{file_safe_name}.png",
-            os.path.join(appdir, f"{file_safe_name}.png"),
-        )
-        os.symlink(
-            f"usr/share/applications/{file_safe_name}.desktop",
-            os.path.join(appdir, f"{file_safe_name}.desktop"),
-        )
-
-        # Run appimagetool
+        # Run appimagetool with verbose output to help debug
         appimage_path = os.path.join(
             project_path, f"{file_safe_name}-{version}-x86_64.AppImage"
         )
-        subprocess.run(["appimagetool", appdir, appimage_path], check=True)
+        subprocess.run(["appimagetool", "-v", appdir, appimage_path], check=True)
         results["appimage"] = appimage_path
         print(f"Created AppImage: {appimage_path}")
 
