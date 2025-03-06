@@ -430,13 +430,59 @@ def create_macos_dmg_with_hdiutil(app_path, version, project_path="."):
     return os.path.abspath(dmg_path)
 
 
-def create_linux_packages(app_path, version, project_path="."):
+def detect_packaging_tools():
+    """Detect available packaging tools on the system"""
+    tools = {}
+
+    # Check for various packaging tools
+    for tool, cmd in {
+        "fpm": ["which", "fpm"],
+        "rpmbuild": ["which", "rpmbuild"],
+        "alien": ["which", "alien"],
+        "appimagetool": ["which", "appimagetool"],
+    }.items():
+        try:
+            subprocess.run(
+                cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+            tools[tool] = True
+        except subprocess.CalledProcessError:
+            tools[tool] = False
+
+    return tools
+
+
+def check_linux_dependencies():
+    """Check for critical runtime dependencies"""
+    missing = []
+
+    # Check for important libraries
+    libraries = ["libusb", "libudev"]
+    for lib in libraries:
+        try:
+            subprocess.run(
+                ["ldconfig", "-p"], check=True, stdout=subprocess.PIPE, text=True
+            )
+            # Add logic to parse output and check for library
+        except:
+            missing.append(lib)
+
+    if missing:
+        print(f"Warning: Missing libraries that may be needed: {', '.join(missing)}")
+        print("Your package may need to list these as dependencies.")
+
+
+def create_linux_packages(app_path, version, project_path=".", packaging_tools=None):
     """Create various Linux packages (.deb, .rpm, AppImage)"""
     import subprocess
     import os
     import shutil
     import tempfile
     from pathlib import Path
+
+    # If packaging_tools not provided, detect them now
+    if packaging_tools is None:
+        packaging_tools = detect_packaging_tools()
 
     app_name = "MIDI-HID Inspektr"
     file_safe_name = (
@@ -450,102 +496,43 @@ def create_linux_packages(app_path, version, project_path="."):
     print("Creating Linux packages...")
     results = {}
 
-    # Prepare desktop entry
-    desktop_file_content = f"""[Desktop Entry]
-Name={app_name}
-Comment={description}
-Exec=/usr/bin/{file_safe_name}
-Icon=/usr/share/pixmaps/{file_safe_name}.png
-Terminal=false
-Type=Application
-Categories=Utility;AudioVideo;Music;
-Keywords=MIDI;HID;USB;Inspector;
-"""
+    # Rest of your function remains the same, but replace the RPM section with:
 
-    # Create a temp directory for packaging
-    temp_dir = os.path.join(project_path, "linux_packaging")
-    if os.path.exists(temp_dir):
-        shutil.rmtree(temp_dir)
-    os.makedirs(temp_dir, exist_ok=True)
-
-    # Create desktop file
-    desktop_file_path = os.path.join(temp_dir, f"{file_safe_name}.desktop")
-    with open(desktop_file_path, "w") as f:
-        f.write(desktop_file_content)
-
-    # Copy icon for packaging
-    icon_source = os.path.join(project_path, "resources/icons/app_icon.png")
-    icon_dest = os.path.join(temp_dir, f"{file_safe_name}.png")
-    shutil.copy(icon_source, icon_dest)
-
-    # Create .deb package using fpm if available
+    # Create .rpm package
     try:
-        print("Creating .deb package...")
-        deb_path = os.path.join(project_path, f"{file_safe_name}_{version}_amd64.deb")
-
-        # Make sure the app binary is executable
-        app_binary = os.path.join(app_path, app_name)
-        if os.path.exists(app_binary):
-            os.chmod(app_binary, 0o755)
-
-        # Build .deb package using fpm
-        cmd = [
-            "fpm",
-            "-s",
-            "dir",
-            "-t",
-            "deb",
-            "-n",
-            file_safe_name,
-            "-v",
-            version,
-            "--description",
-            description,
-            "--url",
-            website,
-            "--maintainer",
-            maintainer,
-            "--license",
-            license_type,
-            "--category",
-            "utils",
-            "--deb-no-default-config-files",
-            f"{app_path}/={'/usr/lib/' + file_safe_name}",
-            f"{desktop_file_path}=/usr/share/applications/{file_safe_name}.desktop",
-            f"{icon_dest}=/usr/share/pixmaps/{file_safe_name}.png",
-        ]
-
-        # Create a wrapper script that launches the application
-        wrapper_script = os.path.join(temp_dir, file_safe_name)
-        with open(wrapper_script, "w") as f:
-            f.write(
-                f"""#!/bin/sh
-exec /usr/lib/{file_safe_name}/{app_name} "$@"
-"""
-            )
-        os.chmod(wrapper_script, 0o755)
-
-        # Add the wrapper script to the package
-        cmd.append(f"{wrapper_script}=/usr/bin/{file_safe_name}")
-
-        # Run fpm to create the .deb package
-        subprocess.run(cmd, check=True)
-        results["deb"] = deb_path
-        print(f"Created .deb package: {deb_path}")
-
-        # Create .rpm package based on the .deb
         print("Creating .rpm package...")
-        rpm_path = os.path.join(
-            project_path, f"{file_safe_name}-{version}-1.x86_64.rpm"
-        )
-        rpm_cmd = ["fpm", "-s", "deb", "-t", "rpm", deb_path]
-        subprocess.run(rpm_cmd, check=True)
-        results["rpm"] = rpm_path
-        print(f"Created .rpm package: {rpm_path}")
+        if packaging_tools.get("fpm", False):
+            # First try with FPM if available
+            rpm_path = os.path.join(
+                project_path, f"{file_safe_name}-{version}-1.x86_64.rpm"
+            )
+            rpm_cmd = ["fpm", "-s", "deb", "-t", "rpm", deb_path]
+            subprocess.run(rpm_cmd, check=True)
+            results["rpm"] = rpm_path
+            print(f"Created .rpm package (FPM): {rpm_path}")
+        elif packaging_tools.get("rpmbuild", False):
+            # Fall back to native RPM build
+            print("FPM not available, trying native RPM build...")
+            rpm_path = create_rpm_native(app_path, version, project_path)
+            if rpm_path:
+                results["rpm"] = rpm_path
+        elif packaging_tools.get("alien", False):
+            # Last resort: use alien to convert
+            print("Using alien to convert .deb to .rpm...")
+            rpm_path = os.path.join(
+                project_path, f"{file_safe_name}-{version}-2.x86_64.rpm"
+            )
+            subprocess.run(["alien", "--to-rpm", "--scripts", deb_path], check=True)
+            results["rpm"] = rpm_path
+            print(f"Created .rpm package (alien): {rpm_path}")
+        else:
+            print(
+                "No RPM build tools available (fpm, rpmbuild, or alien). Skipping RPM package."
+            )
+    except Exception as e:
+        print(f"Error creating .rpm package: {e}")
 
-    except (subprocess.CalledProcessError, FileNotFoundError) as e:
-        print(f"Error creating .deb/.rpm packages: {e}")
-        print("Make sure 'fpm' is installed: gem install fpm")
+    # Rest of your function for AppImage creation...
 
     # Create AppImage if appimagetool is available
     try:
@@ -707,74 +694,213 @@ def build_windows(version, portable=False, installer=False, project_path="."):
             print(f"Manually compile the installer script: {inno_script}")
 
 
-# def create_flatpak_manifest(version, project_path="."):
-#     """Create a Flatpak manifest for the application"""
-#     import json
-#     import os
-    
-#     app_name = "MIDI-HID Inspektr"
-#     app_id = "com.yourashp8i.MIDIHIDInspektr"
-#     file_safe_name = "midi-hid-inspektr"
-    
-#     # Create the flatpak manifest
-#     manifest = {
-#         "app-id": app_id,
-#         "runtime": "org.freedesktop.Platform",
-#         "runtime-version": "22.08",
-#         "sdk": "org.freedesktop.Sdk",
-#         "command": file_safe_name,
-#         "finish-args": [
-#             "--share=ipc",
-#             "--socket=x11",
-#             "--socket=wayland",
-#             "--device=all",    # For USB/MIDI/HID device access
-#             "--filesystem=host",
-#             "--share=network"
-#         ],
-#         "modules": [
-#             {
-#                 "name": file_safe_name,
-#                 "buildsystem": "simple",
-#                 "build-commands": [
-#                     f"install -D {file_safe_name} /app/bin/{file_safe_name}",
-#                     f"install -D {file_safe_name}.desktop /app/share/applications/{app_id}.desktop",
-#                     f"install -D {file_safe_name}.png /app/share/icons/hicolor/256x256/apps/{app_id}.png"
-#                 ],
-#                 "sources": [
-#                     {
-#                         "type": "file",
-#                         "path": f"dist/{app_name}/{app_name}",
-#                         "dest-filename": file_safe_name 
-#                     },
-#                     {
-#                         "type": "file",
-#                         "path": f"linux_packaging/{file_safe_name}.desktop",
-#                         "dest-filename": f"{file_safe_name}.desktop"
-#                     },
-#                     {
-#                         "type": "file",
-#                         "path": "resources/icons/app_icon.png",
-#                         "dest-filename": f"{file_safe_name}.png"
-#                     }
-#                 ]
-#             }
-#         ]
-#     }
-    
+def create_rpm_native(app_path, version, project_path="."):
+    """Create RPM package using rpm tools installed on Debian"""
+    import subprocess
+    import os
+    import tempfile
+    import shutil
+
+    app_name = "MIDI-HID Inspektr"
+    file_safe_name = "midi-hid-inspektr"
+
+    try:
+        # Check if rpm tools are installed
+        subprocess.run(["which", "rpmbuild"], check=True, stdout=subprocess.PIPE)
+    except subprocess.CalledProcessError:
+        print("rpmbuild is not installed. Installing RPM tools...")
+        subprocess.run(["sudo", "apt-get", "update"], check=True)
+        subprocess.run(["sudo", "apt-get", "install", "-y", "rpm"], check=True)
+
+    # Create RPM build directories
+    rpm_build_dir = os.path.join(project_path, "rpm-build")
+    for subdir in ["SPECS", "SOURCES", "BUILD", "RPMS", "SRPMS"]:
+        os.makedirs(os.path.join(rpm_build_dir, subdir), exist_ok=True)
+
+    # Create tarball of the application
+    source_dir = os.path.join(rpm_build_dir, "SOURCES")
+    tarball_name = f"{file_safe_name}-{version}.tar.gz"
+    tarball_path = os.path.join(source_dir, tarball_name)
+
+    # Copy app to a temp directory with the correct structure
+    with tempfile.TemporaryDirectory() as temp_dir:
+        package_dir = os.path.join(temp_dir, f"{file_safe_name}-{version}")
+        os.makedirs(package_dir)
+
+        # Copy application files
+        shutil.copytree(app_path, os.path.join(package_dir, file_safe_name))
+
+        # Create desktop file
+        desktop_content = f"""[Desktop Entry]
+Name={app_name}
+Comment=Tool for inspecting MIDI and HID devices
+Exec=/usr/bin/{file_safe_name}
+Icon=/usr/share/pixmaps/{file_safe_name}.png
+Terminal=false
+Type=Application
+Categories=Utility;AudioVideo;Music;
+"""
+        with open(os.path.join(package_dir, f"{file_safe_name}.desktop"), "w") as f:
+            f.write(desktop_content)
+
+        # Copy icon
+        icon_source = os.path.join(project_path, "resources/icons/app_icon.png")
+        shutil.copy(icon_source, os.path.join(package_dir, f"{file_safe_name}.png"))
+
+        # Create the tarball
+        subprocess.run(
+            ["tar", "czf", tarball_path, f"{file_safe_name}-{version}"],
+            cwd=temp_dir,
+            check=True,
+        )
+
+    # Create spec file
+    spec_content = f"""Name:           {file_safe_name}
+Version:        {version}
+Release:        1%{{?dist}}
+Summary:        Tool for inspecting MIDI and HID devices
+
+License:        MIT
+URL:            https://github.com/yourashp8i/midi-hid-inspektr
+Source0:        %{{name}}-%{{version}}.tar.gz
+
+BuildArch:      x86_64
+Requires:       libusb
+
+%description
+A utility for inspecting and debugging MIDI and HID devices
+
+%prep
+%setup -q
+
+%install
+mkdir -p %{{buildroot}}/usr/bin
+mkdir -p %{{buildroot}}/usr/share/applications
+mkdir -p %{{buildroot}}/usr/share/pixmaps
+mkdir -p %{{buildroot}}/usr/lib/%{{name}}
+
+cp -r %{{name}} %{{buildroot}}/usr/lib/
+cp %{{name}}.desktop %{{buildroot}}/usr/share/applications/
+cp %{{name}}.png %{{buildroot}}/usr/share/pixmaps/
+
+# Create wrapper script
+cat > %{{buildroot}}/usr/bin/%{{name}} << EOF
+#!/bin/sh
+exec /usr/lib/%{{name}}/%{{name}} "$@"
+EOF
+chmod 755 %{{buildroot}}/usr/bin/%{{name}}
+
+%files
+%attr(755,root,root) /usr/bin/%{{name}}
+/usr/lib/%{{name}}
+/usr/share/applications/%{{name}}.desktop
+/usr/share/pixmaps/%{{name}}.png
+
+%changelog
+* {subprocess.check_output(["date", "+%a %b %d %Y"]).decode().strip()} YourAshp8i <your.email@example.com> - {version}-1
+- Initial package
+"""
+
+    spec_path = os.path.join(rpm_build_dir, "SPECS", f"{file_safe_name}.spec")
+    with open(spec_path, "w") as f:
+        f.write(spec_content)
+
+    # Build the RPM
+    subprocess.run(
+        [
+            "rpmbuild",
+            "-bb",
+            spec_path,
+            f"--define=_topdir {os.path.abspath(rpm_build_dir)}",
+        ],
+        check=True,
+    )
+
+    # Find the built RPM
+    rpm_arch_dir = os.path.join(rpm_build_dir, "RPMS", "x86_64")
+    rpm_files = [f for f in os.listdir(rpm_arch_dir) if f.endswith(".rpm")]
+
+    if rpm_files:
+        rpm_path = os.path.join(rpm_arch_dir, rpm_files[0])
+        # Copy to project root
+        dest_path = os.path.join(project_path, rpm_files[0])
+        shutil.copy(rpm_path, dest_path)
+        print(f"Created RPM package: {dest_path}")
+        return dest_path
+    else:
+        print("No RPM package found after build")
+        return None
+
+
+def create_flatpak_manifest(version, project_path="."):
+    """Create a Flatpak manifest for the application"""
+    import json
+    import os
+
+    app_name = "MIDI-HID Inspektr"
+    app_id = "com.yourashp8i.MIDIHIDInspektr"
+    file_safe_name = "midi-hid-inspektr"
+
+    # Create the flatpak manifest
+    manifest = {
+        "app-id": app_id,
+        "runtime": "org.freedesktop.Platform",
+        "runtime-version": "22.08",
+        "sdk": "org.freedesktop.Sdk",
+        "command": file_safe_name,
+        "finish-args": [
+            "--share=ipc",
+            "--socket=x11",
+            "--socket=wayland",
+            "--device=all",  # For USB/MIDI/HID device access
+            "--filesystem=host",
+            "--share=network",
+        ],
+        "modules": [
+            {
+                "name": file_safe_name,
+                "buildsystem": "simple",
+                "build-commands": [
+                    f"install -D {file_safe_name} /app/bin/{file_safe_name}",
+                    f"install -D {file_safe_name}.desktop /app/share/applications/{app_id}.desktop",
+                    f"install -D {file_safe_name}.png /app/share/icons/hicolor/256x256/apps/{app_id}.png",
+                ],
+                "sources": [
+                    {
+                        "type": "file",
+                        "path": f"dist/{app_name}/{app_name}",
+                        "dest-filename": file_safe_name,
+                    },
+                    {
+                        "type": "file",
+                        "path": f"linux_packaging/{file_safe_name}.desktop",
+                        "dest-filename": f"{file_safe_name}.desktop",
+                    },
+                    {
+                        "type": "file",
+                        "path": "resources/icons/app_icon.png",
+                        "dest-filename": f"{file_safe_name}.png",
+                    },
+                ],
+            }
+        ],
+    }
+
+
 #     # Create flatpak directory
 #     flatpak_dir = os.path.join(project_path, "flatpak")
 #     os.makedirs(flatpak_dir, exist_ok=True)
-    
+
 #     # Write manifest file
 #     manifest_path = os.path.join(flatpak_dir, f"{app_id}.json")
 #     with open(manifest_path, "w") as f:
 #         json.dump(manifest, f, indent=4)
-    
+
 #     print(f"Created Flatpak manifest: {manifest_path}")
-    
+
 #     # Create instructions file
 #     instructions_path = os.path.join(flatpak_dir, "README.md")
-    
+
 #     instructions_content = f"""# Flatpak Build Instructions for {app_name}
 
 
