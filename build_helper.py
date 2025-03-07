@@ -565,12 +565,19 @@ Keywords=MIDI;HID;USB;Inspector;
             ]
 
             # Create a wrapper script that launches the application
+            # In your packaging script, update the wrapper script
             wrapper_script = os.path.join(packaging_temp_dir, file_safe_name)
             with open(wrapper_script, "w") as f:
                 f.write(
-                    f"""#!/bin/sh
-exec /usr/lib/{file_safe_name}/{app_name} "$@"
-"""
+                    f"""#!/bin/bash
+            # Wrapper script for {app_name}
+
+            # Set error handling
+            set -e
+
+            # The actual executable path with proper quoting for spaces
+            exec "/usr/lib/{file_safe_name}/{app_name}" "$@"
+            """
                 )
             os.chmod(wrapper_script, 0o755)
 
