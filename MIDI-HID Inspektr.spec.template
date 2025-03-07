@@ -10,10 +10,12 @@ block_cipher = None
 version_string = "{{VERSION}}"
 app_name = "{{APP_NAME}}"
 
+# Define the path to your splash image
+splash_path = Path('resources/images/splash.png')
+
 # Collect data files
 datas = [
     ('resources/icons/', 'resources/icons/'),
-    ('resources/images/splash.png', 'resources/images/'),  # Add splash image
     ('resources/images/', 'resources/images/'),  # Include all images
     # Add other resource folders as needed
 ]
@@ -62,7 +64,8 @@ bundle_options = {
     'version': version_string,
 }
 
-# Add macOS specific options
+# Create a special collection for macOS that includes the splash image in multiple locations
+# to ensure it's available regardless of how the app looks for it
 if platform.system() == 'Darwin':
     bundle_options['bundle_identifier'] = '{{BUNDLE_ID}}'
     bundle_options['info_plist'] = {
@@ -79,14 +82,31 @@ if platform.system() == 'Darwin':
         'NSHighResolutionCapable': 'True',
     }
     
-    # For macOS, we need to ensure the splash screen and other resources are properly included
-    # The correct format for entries in a.datas is (src_path, dest_path, 'DATA')
-    if Path('resources/images/splash.png').exists():
-        # Add the splash image to both standard location and app bundle Resources
-        # Notice the third element 'DATA' which was missing in the previous version
-        a.datas += [('splash.png', str(Path('resources/images/splash.png')), 'DATA')]
+    # Create copies of the datas to add the splash image in multiple locations
+    mac_datas = a.datas.copy()
     
-    app = BUNDLE(exe, a.binaries, a.zipfiles, a.datas, **bundle_options)
+    # Only add the splash.png if it exists
+    if splash_path.exists():
+        print(f"Adding splash image from {splash_path} to macOS app bundle")
+        
+        # Add to Resources directory (for app bundle)
+        mac_datas.append(('splash.png', str(splash_path), 'DATA'))
+        
+        # Also add to the standard location if it's not already there
+        mac_datas.append(('resources/images/splash.png', str(splash_path), 'DATA'))
+        
+        # And for extra safety, add to a few other common locations apps might look
+        mac_datas.append(('resources/splash.png', str(splash_path), 'DATA'))
+    else:
+        print(f"Warning: Splash image not found at {splash_path}")
+    
+    app = BUNDLE(
+        exe,
+        a.binaries,
+        a.zipfiles,
+        mac_datas,  # Use our enhanced data collection
+        **bundle_options
+    )
 else:
     # For Windows and Linux, we just use a directory
     coll = COLLECT(exe, a.binaries, a.zipfiles, a.datas, name=app_name)
