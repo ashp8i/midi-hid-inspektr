@@ -1,6 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 import os
+import platform
 from pathlib import Path
 
 block_cipher = None
@@ -12,6 +13,8 @@ app_name = "{{APP_NAME}}"
 # Collect data files
 datas = [
     ('resources/icons/', 'resources/icons/'),
+    ('resources/images/splash.png', 'resources/images/'),  # Add splash image
+    ('resources/images/', 'resources/images/'),  # Include all images
     # Add other resource folders as needed
 ]
 
@@ -60,7 +63,7 @@ bundle_options = {
 }
 
 # Add macOS specific options
-if os.name == 'posix' and os.uname().sysname == 'Darwin':
+if platform.system() == 'Darwin':
     bundle_options['bundle_identifier'] = '{{BUNDLE_ID}}'
     bundle_options['info_plist'] = {
         'CFBundleName': app_name,
@@ -72,7 +75,16 @@ if os.name == 'posix' and os.uname().sysname == 'Darwin':
         'NSHumanReadableCopyright': f'© 2025 Your ashp8i',
         'NSPrincipalClass': 'NSApplication',
         'CFBundleGetInfoString': 'MIDI and HID device visualization tool',
+        # Special key to make sure Retina displays are properly handled
+        'NSHighResolutionCapable': 'True',
     }
+    
+    # For macOS, we need to ensure the splash screen and other resources are properly included
+    # The correct format for entries in a.datas is (src_path, dest_path, 'DATA')
+    if Path('resources/images/splash.png').exists():
+        # Add the splash image to both standard location and app bundle Resources
+        # Notice the third element 'DATA' which was missing in the previous version
+        a.datas += [('splash.png', str(Path('resources/images/splash.png')), 'DATA')]
     
     app = BUNDLE(exe, a.binaries, a.zipfiles, a.datas, **bundle_options)
 else:

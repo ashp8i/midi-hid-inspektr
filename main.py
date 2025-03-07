@@ -185,11 +185,15 @@ def main():
 
     # Show splash screen
     try:
-        splash = CustomSplash("MIDI/HID Inspektr", "1.0.0")
+        # Show splash screen with more detailed error handling
+        splash = CustomSplash("MIDI/HID Inspektr", "1.0.0", use_image=True)
         splash.show()
         app.processEvents()
     except Exception as e:
         print(f"Error creating splash screen: {e}")
+        import traceback
+
+        traceback.print_exc()
         splash = None
 
     # Create handlers
